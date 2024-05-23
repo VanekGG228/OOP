@@ -7,8 +7,8 @@ class Mammal : public Animal {
 
 public:
 
-    Mammal(sf::Vector2f coords, string food);
+    Mammal(sf::Vector2f coords, std::string food);
 private:
     void Food();
-    string food;
+    std::string food;
 };

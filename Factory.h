@@ -17,14 +17,14 @@ public:
         case Cat_t:
             p = new Cat(coords, "meat", scale);
             break;
-        case Cow_t:
+        case Horse_t:
             p = new Horse(coords, "grass", scale);
             break;
-        case Eagle_t:
+        case Rabbit_t:
             p = new Rabbit(coords, "brown", scale);
             break;
         case Parrot_t:
-            p = new Parrot(coords, "Red", scale);
+            p = new Parrot(coords, "Red", sf::Vector2f{ 0.5f, 0.5f });
             break;
         default:
             return nullptr;

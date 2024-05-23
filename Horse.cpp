@@ -13,17 +13,17 @@ void Horse::resize(sf::Vector2f coords) {
     sprite.setScale(newScale.x, newScale.y);
 }
 
-void Horse::serializeJson(std::ofstream& out) {
-    nlohmann::json j{};
+void Horse::serializeJson(nlohmann::json& j) {
+    Vector2f coords = sprite.getPosition();
+    Vector2f newScale = sprite.getScale();
     j["type"] = type;
     j["coords.x"] = coords.x;
     j["coords.y"] = coords.y;
     j["scale.x"] = newScale.x;
     j["scale.y"] = newScale.y;
-    out << j.dump(4);
 }
 
-Horse::Horse(sf::Vector2f coords, string food, sf::Vector2f scale) :Mammal(coords, food) {
+Horse::Horse(sf::Vector2f coords, std::string food, sf::Vector2f scale) :Mammal(coords, food) {
     this->type = 2;
     this->newScale = scale;
     this->name = "img/Horse.png";
@@ -37,28 +37,17 @@ Horse::Horse(sf::Vector2f coords, string food, sf::Vector2f scale) :Mammal(coord
 }
 
 void Horse::goLeft(float time) {
-    CurrentFrame += 0.01 * time;
-    if (CurrentFrame > 4) {
-        CurrentFrame -= 4;
-        top += 120;
-        top %= 360;
-    }
-
-    sprite.setTextureRect(IntRect(150 * int(CurrentFrame)+150, top, -150, 115));
-    sprite.move(-0.2 * time, 0);
+    state = -1;
+    animate(state, time);
+    sprite.move(-speed * time, 0);
 }
 
 
 void Horse::goRight(float time) {
-    CurrentFrame += 0.01 * time;
-    if (CurrentFrame > 4) {
-        CurrentFrame -= 4;
-        top += 120;
-        top %= 360;
-    }
-
-    sprite.setTextureRect(IntRect(150 * int(CurrentFrame), top, 150, 115));
-    sprite.move(0.2 * time, 0);
+    state = 1;
+    animate(state, time);
+    sprite.move(speed * time, 0);
+ 
 }
 
 
@@ -67,4 +56,29 @@ bool Horse::Jump() {
     float time = speed * clock.getElapsedTime().asSeconds();
     sprite.setPosition(sprite.getPosition().x, Y - JumpSpeed * time + 5 * time * time);
     return time < (JumpSpeed / 5);
+}
+
+void Horse::goUp(float time)
+{
+    animate(state, time); 
+    sprite.move(0, -speed * time); 
+}
+
+void Horse::goDown(float time)
+{
+    animate(state, time);
+    sprite.move(0, speed * time);
+}
+
+void Horse::animate(int state, float time)
+{
+    CurrentFrame += 0.01 * time;
+    if (CurrentFrame > 4) {
+        CurrentFrame -= 4;
+        top += 120;
+        top %= 360;
+    }
+    int k = 150;
+    if (state > 0) k = 0;
+    sprite.setTextureRect(IntRect(150 * int(CurrentFrame) + k, top, state * 150, 115));
 }

@@ -1,2 +1,0 @@
-# OOP
-C/C++ SFML

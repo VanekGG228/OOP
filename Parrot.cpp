@@ -1,7 +1,7 @@
 #include "Parrot.h"
 
-Parrot::Parrot(sf::Vector2f coords, string plumage, sf::Vector2f scale) :Bird(coords, plumage) {
-    this->type = 4;
+Parrot::Parrot(sf::Vector2f coords, std::string plumage, sf::Vector2f scale) :Bird(coords, plumage) {
+    this->type = 3;
     this->newScale= scale;
     this->name = "img/parrotAnime1.png";
     texture.loadFromFile(name);
@@ -19,14 +19,14 @@ void Parrot::serializeBin(std::ofstream& out) {
     out.write(reinterpret_cast<char*>(&newScale), sizeof(sf::Vector2f));
 }
 
-void Parrot::serializeJson(std::ofstream& out) {
-    nlohmann::json j{};
+void Parrot::serializeJson(nlohmann::json& j) {
+    Vector2f coords = sprite.getPosition();
+    Vector2f newScale = sprite.getScale();
     j["type"] = type;
     j["coords.x"] = coords.x;
     j["coords.y"] = coords.y;
     j["scale.x"] = newScale.x;
     j["scale.y"] = newScale.y;
-    out << j.dump(4);
 }
 
 void Parrot::resize(sf::Vector2f coords) {
@@ -37,28 +37,16 @@ void Parrot::resize(sf::Vector2f coords) {
 }
 
 void Parrot::goLeft(float time) {
-    CurrentFrame += 0.005 * time;
-    if (CurrentFrame > 3) {
-        CurrentFrame -= 3;
-        top += 280;
-        top %= 840;
-    }
-
-    sprite.setTextureRect(IntRect(340 * int(CurrentFrame) + 340, top, -320, 280));
-    sprite.move(-0.1 * time, 0);
+    state = -1;
+    animate(state, time);
+    sprite.move(-speed * time, 0);
 }
 
 
 void Parrot::goRight(float time) {
-    CurrentFrame += 0.005 * time;
-    if (CurrentFrame > 3) {
-        CurrentFrame -= 3;
-        top += 280;
-        top %= 840;
-    }
-
-    sprite.setTextureRect(IntRect(340 * int(CurrentFrame), top, 320, 280));
-    sprite.move(0.1 * time, 0);
+    state = 1;
+    animate(state, time);
+    sprite.move(speed * time, 0);
 }
 
 bool Parrot::Jump() {
@@ -67,3 +55,29 @@ bool Parrot::Jump() {
     sprite.setPosition(sprite.getPosition().x, Y - JumpSpeed * time + 5 * time * time);
     return time < (JumpSpeed / 5);
 }
+
+void Parrot::goUp(float time)
+{
+    animate(state, time); 
+    sprite.move(0, -speed * time); 
+}
+
+void Parrot::goDown(float time)
+{
+    sprite.move(0, speed * time);
+}
+
+void Parrot::animate(int state, float time)
+{
+    CurrentFrame += 0.005 * time;
+    if (CurrentFrame > 3) {
+        CurrentFrame -= 3;
+        top += 280;
+        top %= 840;
+    }
+
+    int k = 340;
+    if (state > 0) k = 0;
+    sprite.setTextureRect(IntRect(340 * int(CurrentFrame) + k, top, state *320, 280));
+}
+

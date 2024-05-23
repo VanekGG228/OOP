@@ -7,8 +7,8 @@ void Rabbit::serializeBin(std::ofstream& out) {
     out.write(reinterpret_cast<char*>(&newScale), sizeof(sf::Vector2f));
 }
 
-Rabbit::Rabbit(sf::Vector2f coords, string food, sf::Vector2f scale) :Mammal(coords, food) {
-    this->type = 3;
+Rabbit::Rabbit(sf::Vector2f coords, std::string food, sf::Vector2f scale) :Mammal(coords, food) {
+    this->type = 1;
     this->newScale = scale;
     this->name = "img/Rabbit.png";
     texture.loadFromFile(name);
@@ -19,14 +19,15 @@ Rabbit::Rabbit(sf::Vector2f coords, string food, sf::Vector2f scale) :Mammal(coo
     Y = coords.y;
     clock.restart();
 }
-void Rabbit::serializeJson(std::ofstream& out) {
-    nlohmann::json j{};
+void Rabbit::serializeJson(nlohmann::json& j) {
+    Vector2f coords = sprite.getPosition();
+    Vector2f newScale = sprite.getScale();
     j["type"] = type;
     j["coords.x"] = coords.x;
     j["coords.y"] = coords.y;
     j["scale.x"] = newScale.x;
     j["scale.y"] = newScale.y;
-    out << j.dump(4);
+
 }
 
 void Rabbit::resize(sf::Vector2f coords) {
@@ -37,27 +38,16 @@ void Rabbit::resize(sf::Vector2f coords) {
 }
 
 void Rabbit::goLeft(float time) {
-    CurrentFrame += 0.01 * time;
-    if (CurrentFrame > 3) {
-        CurrentFrame -= 3;
-        top += 100;
-        top %= 200;
-    }
-    sprite.setTextureRect(IntRect(105 * int(CurrentFrame)+105, top, -105, 100));
-    sprite.move(-0.2 * time, 0);
+    state = - 1; 
+    animate(state, time); 
+    sprite.move(-speed * time, 0);
 }
 
 
 void Rabbit::goRight(float time) {
-    CurrentFrame += 0.01 * time;
-    if (CurrentFrame > 3) {
-        CurrentFrame -= 3;
-        top += 100;
-        top %= 200;
-    }
-
-    sprite.setTextureRect(IntRect(105 * int(CurrentFrame), top, 105, 100));
-    sprite.move(0.2 * time, 0);
+    state = 1;
+    animate(state, time);
+    sprite.move(speed * time, 0);
 }
 
 
@@ -66,4 +56,29 @@ bool Rabbit::Jump() {
     float time = speed * clock.getElapsedTime().asSeconds();
     sprite.setPosition(sprite.getPosition().x, Y - JumpSpeed * time + 5 * time * time);
     return time < (JumpSpeed / 5);
+}
+
+void Rabbit::goUp(float time)
+{
+    animate(state, time); 
+    sprite.move(0, -speed * time);
+}
+
+void Rabbit::goDown(float time)
+{
+    animate(state, time); 
+    sprite.move(0, speed * time); 
+}
+
+void Rabbit::animate(int state, float time)
+{
+    CurrentFrame += 0.01 * time;
+    if (CurrentFrame > 3) {
+        CurrentFrame -= 3;
+        top += 100;
+        top %= 200;
+    }
+    int k = 105;
+    if (state > 0) k = 0;
+    sprite.setTextureRect(IntRect(105 * int(CurrentFrame) + k, top, state * 105, 100));
 }

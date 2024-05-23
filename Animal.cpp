@@ -8,7 +8,12 @@ Animal::Animal(sf::Vector2f coords) {
 }
 
 
-void Animal::rePos(sf::Vector2f coords) {   
+sf::FloatRect Animal::getBounds()
+{
+    return sprite.getGlobalBounds();
+}
+
+void Animal::rePos(sf::Vector2f coords) {
     sprite.setPosition(coords);
 }
 
@@ -18,6 +23,11 @@ sf::Vector2f Animal::getScale() {
 
 sf::Vector2f Animal::getCoords() {
     return coords;
+}
+
+int Animal::getType()
+{
+     return type; 
 }
 
 sf::Sprite* Animal::getSprite() {

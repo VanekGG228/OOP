@@ -15,19 +15,19 @@ void Cat::serializeBin(std::ofstream& out) {
 }
 
 
-void Cat::serializeJson(std::ofstream& out) {
-    nlohmann::json j{};
+void Cat::serializeJson(nlohmann::json& j) {
+    Vector2f coords = sprite.getPosition();
+    Vector2f newScale = sprite.getScale();
     j["type"] = type;
     j["coords.x"] = coords.x;
     j["coords.y"] = coords.y;
     j["scale.x"] = newScale.x;
     j["scale.y"] = newScale.y;
-    out << j.dump(4);
 }
 
 
-Cat::Cat(sf::Vector2f coords, string food, sf::Vector2f scale) :Mammal(coords, food) {
-    this->type = 1;
+Cat::Cat(sf::Vector2f coords, std::string food, sf::Vector2f scale) :Mammal(coords, food) {
+    this->type = 0;
     this->newScale = scale;
     this->name = "img/Cat1.png";
     texture.loadFromFile(name);
@@ -41,24 +41,16 @@ Cat::Cat(sf::Vector2f coords, string food, sf::Vector2f scale) :Mammal(coords, f
 
 
 void Cat::goLeft(float time) {
-    CurrentFrame += 0.01 * time;
-    if (CurrentFrame > 5) {
-        CurrentFrame -= 5;
-    }
-
-    sprite.setTextureRect(IntRect(109 * int(CurrentFrame)+109, 0, -109, 99));
-    sprite.move(-0.2 * time, 0);
+    state = -1;
+    animate(-1, time);
+    sprite.move(-speed * time, 0);
 }
 
 
 void Cat::goRight(float time) {
-    CurrentFrame += 0.01 * time;
-    if (CurrentFrame > 5) {
-        CurrentFrame -= 5;
-    }
-
-    sprite.setTextureRect(IntRect(109 * int(CurrentFrame), 0, 109, 99));
-    sprite.move(0.2 * time, 0);
+    state = 1;
+    animate(1, time);
+    sprite.move(speed * time, 0);
 }
 
 
@@ -67,4 +59,27 @@ bool Cat::Jump() {
     float time =speed* clock.getElapsedTime().asSeconds();
     sprite.setPosition(sprite.getPosition().x, Y - JumpSpeed * time + 5* time * time);
     return time<(JumpSpeed/5);
+}
+
+void Cat::goUp(float time)
+{
+    animate(state,time);
+    sprite.move(0, -speed * time);
+}
+
+void Cat::goDown(float time)
+{
+    animate(state, time);
+    sprite.move(0, speed * time);
+}
+
+void Cat::animate(int state, float time)
+{
+    CurrentFrame += 0.01 * time;
+    if (CurrentFrame > 5) {
+        CurrentFrame -= 5;
+    }
+    int k = 109;
+    if (state > 0) k = 0;
+    sprite.setTextureRect(IntRect(109 * int(CurrentFrame) + k, 0, state * 109, 99));
 }
