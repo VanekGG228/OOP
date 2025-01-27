@@ -1,15 +1,17 @@
 #include "Parrot.h"
 
-Parrot::Parrot(sf::Vector2f coords, std::string plumage, sf::Vector2f scale) :Bird(coords, plumage) {
+Parrot::Parrot(sf::Vector2f coords, std::string plumage, sf::Vector2f scale, sf::String names) :Bird(coords, plumage, names) {
     this->type = 3;
     this->newScale= scale;
     this->name = "img/parrotAnime1.png";
     texture.loadFromFile(name);
     sprite.setTexture(texture);
-    sprite.setTextureRect(IntRect(0, 0, 340, 340));
+    sprite.setTextureRect(sf::IntRect(0, 0, 340, 340));
     sprite.setScale(newScale.x, newScale.y);
     sprite.setPosition(coords);
     Y = coords.y;
+    sf::IntRect textureRect = sprite.getTextureRect();
+    text.setPosition(coords.x + textureRect.width / 2 - text.getLocalBounds().width / 2, coords.y - textureRect.height / 2 + 10);
     clock.restart();
 }
 
@@ -20,8 +22,8 @@ void Parrot::serializeBin(std::ofstream& out) {
 }
 
 void Parrot::serializeJson(nlohmann::json& j) {
-    Vector2f coords = sprite.getPosition();
-    Vector2f newScale = sprite.getScale();
+    sf::Vector2f coords = sprite.getPosition();
+    sf::Vector2f newScale = sprite.getScale();
     j["type"] = type;
     j["coords.x"] = coords.x;
     j["coords.y"] = coords.y;
@@ -40,6 +42,7 @@ void Parrot::goLeft(float time) {
     state = -1;
     animate(state, time);
     sprite.move(-speed * time, 0);
+    text.move(-speed * time, 0);
 }
 
 
@@ -47,6 +50,7 @@ void Parrot::goRight(float time) {
     state = 1;
     animate(state, time);
     sprite.move(speed * time, 0);
+    text.move(speed * time, 0);
 }
 
 bool Parrot::Jump() {
@@ -60,11 +64,13 @@ void Parrot::goUp(float time)
 {
     animate(state, time); 
     sprite.move(0, -speed * time); 
+    text.move(0, -speed * time);
 }
 
 void Parrot::goDown(float time)
 {
     sprite.move(0, speed * time);
+    text.move(0, speed * time);
 }
 
 void Parrot::animate(int state, float time)
@@ -78,6 +84,6 @@ void Parrot::animate(int state, float time)
 
     int k = 340;
     if (state > 0) k = 0;
-    sprite.setTextureRect(IntRect(340 * int(CurrentFrame) + k, top, state *320, 280));
+    sprite.setTextureRect(sf::IntRect(340 * int(CurrentFrame) + k, top, state *320, 280));
 }
 

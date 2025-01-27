@@ -1,5 +1,6 @@
 #include "Table.h"
 #include <string>
+#include <iostream>
 
 Table::Table(float x, float y)
 {
@@ -56,6 +57,7 @@ void Table::increaseScore(int index)
 {
     scores[index]++;
     scoreTexts[index].setString(std::to_string(scores[index]));
+    std::cout <<"SCORE inc\t"<< scores[index]<<"\n";
 }
 
 void Table::decreaseScore(int index)

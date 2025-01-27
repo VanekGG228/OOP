@@ -42,7 +42,7 @@ namespace game {
 		{
 			return mainMenuSelected;
 		}
-
+		void renameCol(int i, sf::String newName);
 
 	};
 

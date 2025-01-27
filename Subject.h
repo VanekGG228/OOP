@@ -5,20 +5,12 @@
 
 class Subject {
 public:
-    void addObserver(Observer* observer) {
-        observers.push_back(observer);
-    }
+    void addObserver(Observer* observer);
 
-    void removeObserver(Observer* observer) {
-        observers.erase(std::remove(observers.begin(), observers.end(), observer), observers.end());
-    }
+    void removeObserver(Observer* observer);
 
 protected:
-    void notify(const bool event,int type) {
-        for (Observer* observer : observers) {
-            observer->onNotify(event, type);
-        }
-    }
+    void notify(const bool event, int type);
 
 private:
     std::vector<Observer*> observers;

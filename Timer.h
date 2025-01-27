@@ -5,11 +5,15 @@ class Timer
 public:
 
 	Timer(int time, int size, float x, float y);
+	void setStartTime(int time);
 	void reset();
 	void start();
 	void update();
 	void draw(sf::RenderWindow& win);
 	bool getEnd();
+	std::string getTime() {
+		return text.getString();
+	}
 
 
 private:

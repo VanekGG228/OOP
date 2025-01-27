@@ -38,6 +38,11 @@ void game::GameMenu::AlignMenu(int posx)
 
 }
 
+void game::GameMenu::renameCol(int i, sf::String newName)
+{
+	mainMenu[i].setString(newName);
+}
+
 game::GameMenu::GameMenu(sf::RenderWindow& window, float menux, float menuy, int sizeFont, int step, std::vector<sf::String>& name)
 	:menu_X(menux), menu_Y(menuy), menu_Step(step), max_menu(static_cast<int>(name.size())), size_font(sizeFont), mainMenu(name.size()), mywindow(window)
 {

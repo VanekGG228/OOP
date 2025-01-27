@@ -1,5 +1,5 @@
+#pragma once
 #include "DrawPictures.h"
-
 #include "Factory.h"
 #include <windows.h>
 typedef CipherInterface* (*CreateGunInstanceFunc)();
@@ -14,7 +14,10 @@ void DrawPictures::add(Animal* anime)
 void DrawPictures::draw(sf::RenderWindow& app)
 {
 	for (size_t i = 0; i < animals.size(); ++i) {
-		app.draw(*(animals[i]->getSprite()));
+		if (animals[i]) {
+			//std::cout << float(animals[i]->getSprite()->getPosition().x) << "  " << float(animals[i]->getSprite()->getPosition().y) << std::endl;
+			animals[i]->draw(app); 
+		}
 	}
 }
 
@@ -29,13 +32,19 @@ int DrawPictures::getObj(sf::Vector2f coords)
 
 }
 
-void DrawPictures::genPlayers(int num,int winX, int winY)
+void DrawPictures::genPlayers(std::vector<Client>& clients)
 {
+	int max_id = 0;
+	for (const auto& client : clients) {
+		if (client.id > max_id) {
+			max_id = client.id;
+		}
+	}
+
+	animals.resize(max_id + 1);
 	Factory fact;
-	float pos = winX / 3;
-	for (int i = 0; i < num; ++i) {
-		pos += i * 100;
-		add(fact.createAnimal(Animal_type(i), Vector2f(pos , winY / 3 )));
+	for (const auto& client : clients) {
+		animals[client.id] = fact.createAnimal(Animal_type(client.id), sf::Vector2f(start_x*client.id, start_y), client.name);
 	}
 }
 
@@ -89,69 +98,6 @@ void DrawPictures::del(sf::Vector2f coords)
 
 }
 
-void DrawPictures::save(std::ofstream& out)
-{
-	for (int i = 0; i < animals.size(); ++i) {
-		animals[i]->serializeBin(out);
-	}
-}
-
-void DrawPictures::saveJson(std::string& outS)
-{
-
-	std::ofstream outJ(outS); 
-	if (!outJ.is_open()) { 
-		return;
-	}
-	nlohmann::json jsonArray = nlohmann::json::array();
-
-	for (const auto& animal : animals) {
-		nlohmann::json j; 
-		animal->serializeJson(j); 
-		jsonArray.push_back(j); 
-	}
-
-	outJ << jsonArray.dump(4);
-	outJ.close();
-
-	getLibCipher(true, outS);
-}
-
-void DrawPictures::load(std::ifstream& in)
-{
-	int type = 0;
-	Factory fact;
-	sf::Vector2f coords;
-	sf::Vector2f scale;
-	while (in.read(reinterpret_cast<char*> (&type), sizeof(type))) {
-		in.read(reinterpret_cast<char*> (&coords), sizeof(coords));
-		in.read(reinterpret_cast<char*> (&scale), sizeof(scale));
-		Animal* tmp = fact.createAnimal(Animal_type(type), coords, scale);
-		add(tmp);
-	}
-}
-
-void DrawPictures::loadJson(std::string& inS)
-{
-	std::string tmp("data.r");
-	if (!getLibCipher(false, tmp))
-		inS = "data.json";
-	Factory fact;
-	sf::Vector2f coords, scale; 
-	std::ifstream in(inS);
-	nlohmann::json jsonArray; 
-	in >> jsonArray; 
-	in.close(); 
-
-	for (const auto& j : jsonArray) {
-		
-		Vector2f coords{ j["coords.x"], j["coords.y"] };
-		Vector2f scale{ j["scale.x"], j["scale.y"] };
-		int type = j["type"];
-		add(fact.createAnimal(Animal_type(type), coords, scale)); 
-	}
-}
-
 DrawPictures::~DrawPictures()
 {
 	for (int i = animals.size() - 1; i >= 0; --i) {
@@ -165,7 +111,7 @@ bool DrawPictures::getLibCipher(bool t, std::string& outS)
 {
 	LPCWSTR wfilename = L"plugins/CipherDLL.dll";
 
-	HMODULE pluginHandle = LoadLibraryW(wfilename);
+	HMODULE pluginHandle = LoadLibrary(wfilename);
 
 	if (!pluginHandle) {
 		return false;

@@ -1,256 +1,150 @@
-#include "TInteract.h"
+
+#include <SFML/Network.hpp>
 #include <windows.h>
-#include "Factory.h"
 #include "GameMenu.h"
-#include "AdapterInterface.h"
-#include "Timer.h"
-#include <thread>
-#include <atomic>
+#include "HandlerNetwork.h"
+#include "Input.h"
+#include "TextLabel.h"
+#include "ControllerKeyBoard.h"
+#include "ControllerDisk.h"
 
-std::atomic<bool> running(true);
-
-void controlCat(DrawPictures* obj) {
-    Clock clock; 
-    while (running) { 
-        float time = clock.getElapsedTime().asMicroseconds(); 
-        clock.restart(); 
-
-        time = time / 800; 
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
-            obj->GoLeft(time, 0); 
-        }
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
-            obj->GoRight(time, 0); 
-        }
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
-            obj->GoUp(time, 0); 
-        }
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
-            obj->GoDown(time, 0); 
-        }
-    }
-}
-
-void controlRabbit(DrawPictures* obj) {
-    Clock clock; 
-    while (running) { 
-        float time = clock.getElapsedTime().asMicroseconds(); 
-        clock.restart(); 
-
-        time = time / 800; 
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) {
-            obj->GoLeft(time, 1); 
-        }
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) {
-            obj->GoRight(time, 1); 
-        }
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) {
-            obj->GoUp(time, 1); 
-        }
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) {
-            obj->GoDown(time, 1); 
-        }
-    }
-}
-
-void controlHorse(DrawPictures* obj) {
-    Clock clock; 
-    while (running) {
-        float time = clock.getElapsedTime().asMicroseconds(); 
-        clock.restart();
-
-        time = time / 800;
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::H)) {
-            obj->GoLeft(time, 2); 
-        }
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::K)) {
-            obj->GoRight(time, 2); 
-        }
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::U)) {
-            obj->GoUp(time, 2); 
-        }
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::J)) {
-            obj->GoDown(time, 2); 
-        }
-    }
-}
-
-void controlParrot(DrawPictures* obj) {
-    Clock clock;
-    while (running) {
-        float time = clock.getElapsedTime().asMicroseconds();
-        clock.restart();
-
-        time = time / 800;
-
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Numpad4)) {
-            obj->GoLeft(time, 3); 
-        }
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Numpad6)) {
-            obj->GoRight(time, 3); 
-        }
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Numpad8)) {
-            obj->GoUp(time, 3); 
-        }
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Numpad5)) {
-            obj->GoDown(time, 3);
-        }
-    }
-}
-
-
-using namespace sf;
-
-typedef AdapterInterface* (*CreateInstanceFunc)(); 
-void JsonXmlLib(LPCWSTR  lib,std::string in,std::string out,bool type)
-{
-    LPCWSTR wfilename =lib;
-    HMODULE pluginHandle = LoadLibraryW(wfilename);
-
-    if (!pluginHandle) {
-        return ;
-    }
-    CreateInstanceFunc createFunc = (CreateInstanceFunc)GetProcAddress(pluginHandle, "CreateGunInstance");
-    if (createFunc == NULL) {
-        FreeLibrary(pluginHandle);
-        return ;
-    }
-    AdapterInterface* gunInstance = createFunc();
-
-    if (gunInstance == NULL) {
-        FreeLibrary(pluginHandle);
-        return ;
-    }
-    if (type)
-        gunInstance->convertJsonToXml(in, out);
-    else
-        gunInstance->convertXmlToJson(in, out);
-    gunInstance->clear();
-    
-    FreeLibrary(pluginHandle);
-    return ;
-}
 
 static int Game(int type, int numOfPlayers);
+
+sf::IpAddress S_Ip;
+unsigned short S_port;
+std::string clientName;
+bool DiskContr = false;
 
 static int ChoosePlayer()
 {
 
     sf::RenderWindow window(sf::VideoMode(1080, 760), "Eat food pls!");
 
-    std::vector<String> name_menu{ "2","3","4" };
+    std::vector<sf::String> name_menu{ "NEXT" };
+  
+    game::GameMenu Button(window, 400, 570, 100, 120, name_menu);
+    InputBox inputBox1(100, 100, 800, 50,"IP");
+    InputBox inputBox2(100, 300, 800, 50, "PORT");
+    InputBox inputBox3(100, 500, 800, 50, "NAME");
 
-    game::GameMenu mymenu(window, 540, 150, 100, 120, name_menu);
-
-    mymenu.setColorTextMenu(Color(237, 147, 0), Color::Red, Color::Black);
-    mymenu.AlignMenu(2);
     int returnVAL = 2;
     while (window.isOpen())
     {
-        Event event;
+        sf::Event event;
         while (window.pollEvent(event))
         {
+            inputBox1.handleEvent(event);
+            inputBox2.handleEvent(event);
+            inputBox3.handleEvent(event);
 
-            if (event.type == Event::KeyReleased)
-            {
+            if (event.type == sf::Event::MouseButtonPressed) {
 
-                if (event.key.code == Keyboard::Up) { mymenu.MoveUp(); }
-                if (event.key.code == Keyboard::Down) { mymenu.MoveDown(); }
-                if (event.key.code == Keyboard::Return)
-                {
-                    switch (mymenu.getSelectedMenuNumber())
-                    {
-                    case 0: {               
-                        window.close();  break; 
+                if (Button.MouseClick(window) == 0)
+                { 
+                    S_Ip = inputBox1.getInput();
+                    S_port = static_cast<unsigned short>(std::stoi(inputBox2.getInput()));
+                    clientName = inputBox3.getInput();
+                    if ((S_port == 0) || (clientName == "")) {
+                        break;
                     }
-                    case 1: { 
-                        returnVAL = 3;
-                        window.close();  break; 
-                    }
+                    else {
 
-                    case 2: {
-                        returnVAL = 4;
-                        window.close();  break;
-                    }
-                    default:break;
+                        window.close();
                     }
                 }
             }
-            if (event.type == Event::MouseButtonPressed) {
-
-                switch (mymenu.MouseClick(window))
-                {
-                case 0: {
-                    window.close();  break;
-                }
-
-                case 1: {
-                    returnVAL = 3;
-                    window.close();  break;
-                }
-
-                case 2: {
-                    returnVAL = 4;
-                    window.close();  break;
-                }
-                default:break;
-                }
-            }
+			if (event.type == sf::Event::Closed) {
+				window.close();
+				return -1;
+			}
         }
-
+        
         window.clear();
-        mymenu.draw();
+        Button.draw();
+        inputBox1.draw(window);
+        inputBox2.draw(window);
+        inputBox3.draw(window);
         window.display();
     }
     return returnVAL;
 }
+
+static void Settings();
+
+
 
 int main()
 {
 
     sf::RenderWindow window(sf::VideoMode(1080, 760), "Eat food pls!");
 
-	std::vector<String> name_menu{ "EAT FOOD","DONT CAUGHT","EXIT" };
+	std::vector<sf::String> name_menu{ "EAT FOOD","DONT CAUGHT","SETTINGS","EXIT" };
 
 	game::GameMenu mymenu(window,540, 150, 100, 120, name_menu);
 
-	mymenu.setColorTextMenu(Color(237, 147, 0), Color::Red, Color::Black);
+	mymenu.setColorTextMenu(sf::Color(237, 147, 0), sf::Color::Red, sf::Color::Black);
 	mymenu.AlignMenu(2);
 
 	while (window.isOpen())
 	{
-		Event event;
+        sf::Event event;
 		while (window.pollEvent(event))
 		{
-
-			if (event.type == Event::KeyReleased)
+			switch (event.type)
+			{
+			case sf::Event::KeyReleased:
 			{
 
-				if (event.key.code == Keyboard::Up) { mymenu.MoveUp(); }
-				if (event.key.code == Keyboard::Down) { mymenu.MoveDown(); }
-				if (event.key.code == Keyboard::Return)
+				if (event.key.code == sf::Keyboard::Up) { mymenu.MoveUp(); }
+				if (event.key.code == sf::Keyboard::Down) { mymenu.MoveDown(); }
+				if (event.key.code == sf::Keyboard::Return)
 				{
 					switch (mymenu.getSelectedMenuNumber())
 					{
-                    case 0: Game(1,ChoosePlayer());  break;
-                    
-					case 1:Game(2, ChoosePlayer());  break;
-					case 2:window.close(); break; 
-					default:break;
+					case 0:
+					{
+						int returnVal = ChoosePlayer();
+						if (returnVal == -1) break;
+						Game(1, returnVal);
+						break;
+					}
+
+					case 1:
+					{
+						//Game(1, 1);
+						break;
+					}
+					case 2:Settings(); break;
+					case 3:window.close(); break;
+				    default:break;
 					}
 
 				}
+				break;
 			}
-			if (event.type == Event::MouseButtonPressed) {
+
+			case sf::Event::MouseButtonPressed:
+			{
 
 				switch (mymenu.MouseClick(window))
 				{
-                case 0: Game(1, ChoosePlayer());  break;
-                case 1:Game(2, ChoosePlayer());  break;
-				case 2:window.close(); break;
+				case 0: Game(1, ChoosePlayer());  break;
+				case 1:Game(2, ChoosePlayer());  break;
+				case 2:Settings(); break;
+				case 3:window.close(); break;
 				default:break;
 				}
+				break;
 			}
+			case sf::Event::Closed: {
+				window.close();
+				break;
+			}
+			default:
+				break;
+			}
+			
 		}
 
 		window.clear();
@@ -260,114 +154,95 @@ int main()
 	return 0;
 }
 
-static int Game(int type,int numOfPlayers)
+
+
+int Game(int type,int numOfPlayers)
 {
-    
-    sf::RenderWindow window(sf::VideoMode(1920, 1080), "Eat food pls!");
-    window.clear(sf::Color::White);
-    running = true;
-    DrawPictures obj;
-    Timer* timer = new Timer(60, 40, 940, 0);
-    timer->start();
-    
-    FoodInterface* food = new FoodInterface(type);
-    food->gen();
-    TInteract* interact =TInteract::getInstance();
-    Table* table; 
-    if (type == 1) 
-        table = new Table(100, 100);
-    else
-        table = new Table(100, 100, std::vector<int>{3, 3, 3, 3}); 
-
-
-    interact->addObserver(table);
-
-    std::thread catThread(controlCat, &obj);  
-    std::thread rabbitThread(controlRabbit, &obj);  
-    std::thread horseThread(controlHorse, &obj);  
-    std::thread parrotThread(controlParrot, &obj);  
-
-
-    obj.genPlayers(numOfPlayers, 1920, 1080);
-
-    while (window.isOpen())
-    {
-    
-        sf::Event event;
-        while (window.pollEvent(event))
-        {      
-            switch (event.type) {
-            case sf::Event::Closed: { 
-                running = false;
-                window.close(); 
-            }
-            case sf::Event::KeyPressed:{
-                    if (sf::Keyboard::isKeyPressed(sf::Keyboard::S) && sf::Keyboard::isKeyPressed(sf::Keyboard::LControl)) {
-                        std::string x = "data.json";
-                        obj.saveJson(x);
-                        break;
-                    }
-
-                    if (sf::Keyboard::isKeyPressed(sf::Keyboard::J) && sf::Keyboard::isKeyPressed(sf::Keyboard::LControl)) {
-                        std::string in = "data.json";
-                        obj.loadJson(in);
-                        break;
-                    }
-
-                    if (sf::Keyboard::isKeyPressed(sf::Keyboard::P) && sf::Keyboard::isKeyPressed(sf::Keyboard::J)) {
-
-                        JsonXmlLib(L"plugins/JsonToXmlDLL.dll", std::string("data.json"), std::string("converted.xml"), true);
-                        break;
-                    }
-                    if (sf::Keyboard::isKeyPressed(sf::Keyboard::P) && sf::Keyboard::isKeyPressed(sf::Keyboard::X)) {
-                        JsonXmlLib(L"plugins/JsonToXmlDLL.dll",  std::string("converted.xml"), std::string("data.json"), false);                     
-                        break;
-                    }
-
-                    break;
-            }
-                                      
-            }                    
-        }
-        /*if ((Keyboard::isKeyPressed(Keyboard::Space))) {
-        
-            if (!isJumping) {
-                isJumping = true;
-                obj->restartClock(object);
-            }
-
-        }
-        if (isJumping) {
-            isJumping = obj->Jump(object);
-        }*/
-
-        food->moveall(); 
-        timer->update();
-        interact->interactObjects(obj.animals, food->food);
-        interact->update();
-
-        window.clear(sf::Color(176, 196, 222));
-        if (timer->getEnd()) {
-            table->finalScore(1920, 1080);
-            table->draw(window);
-            window.display();
-            running = false;
-            sf::sleep(sf::seconds(4));
-            window.close();
-        }
-
-        food->draw(window);
-        timer->draw(window);
-        if (Keyboard::isKeyPressed(Keyboard::Tab)) table->draw(window);
-        interact->draw(window);
-        obj.draw(window);
-        window.display();
-    }
-    
-    catThread.join();
-    rabbitThread.join();
-    horseThread.join();
-    parrotThread.join();
-    delete interact, table, food, timer;
+	sf::IpAddress serverIp("192.168.150.3");
+	unsigned short port = 9998;
+	ControllerBase* ctr = new ControllerKeyboard();
+	//DiskContr = true;
+	if (DiskContr) {
+		ctr = new ControllerDisk(serverIp, port);
+	}
+    HandlerNetwork* handlerNet = new HandlerNetwork(S_Ip, S_port, clientName,ctr);
+    handlerNet->main_loop();
+	delete ctr, handlerNet;
     return 0;
 }
+
+void Settings()
+{
+
+	sf::RenderWindow window(sf::VideoMode(1080, 760), "Settings");
+	//TextLabel* labelSettings = new TextLabel("Settings", "font/troika.otf", 90, sf::Color::White, { 30, 10 });
+	TextLabel* labelContr = new TextLabel("Controller", "font/troika.otf", 60, sf::Color::White, sf::Color::Black, { 1080,80 }, { 0, 80 },TextLabel::Alignment::Left);
+
+	std::vector<sf::String> name_menu{ "OFF" };
+
+	game::GameMenu mymenu(window, 500,75, 70, 120, name_menu);
+
+	mymenu.setColorTextMenu(sf::Color::Magenta, sf::Color::Red, sf::Color::Black);
+	mymenu.AlignMenu(2);
+
+	while (window.isOpen())
+	{
+		sf::Event event;
+		while (window.pollEvent(event))
+		{
+			switch (event.type)
+			{
+			case sf::Event::KeyReleased:
+			{
+
+				if (event.key.code == sf::Keyboard::Up) { mymenu.MoveUp(); }
+				if (event.key.code == sf::Keyboard::Down) { mymenu.MoveDown(); }
+				if (event.key.code == sf::Keyboard::Return)
+				{
+					switch (mymenu.getSelectedMenuNumber())
+					{
+					case 0: {
+						mymenu.renameCol(0, DiskContr ? "OFF" : "ON");
+						DiskContr = !DiskContr;
+						break;
+					}
+					default:break;
+					}
+
+				}
+				break;
+			}
+
+			case sf::Event::MouseButtonPressed:
+			{
+
+				switch (mymenu.MouseClick(window))
+				{
+				case 0: {
+					mymenu.renameCol(0, DiskContr ? "OFF" : "ON");
+					DiskContr = !DiskContr;
+					break;
+				}
+				default:break;
+				}
+				break;
+			}
+			
+			case sf::Event::Closed:
+			{
+				window.close();
+				break;
+			}
+			}
+			
+
+		}
+		window.clear(sf::Color(192, 192, 192));
+		labelContr->draw(window);
+		//labelSettings->draw(window);
+		mymenu.draw();
+		window.display();
+	}
+	return;
+}
+

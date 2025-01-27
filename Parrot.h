@@ -5,7 +5,7 @@
 class Parrot : public Bird {
 public:
 
-    Parrot(sf::Vector2f coords, std::string plumage, sf::Vector2f scale);
+    Parrot(sf::Vector2f coords, std::string plumage, sf::Vector2f scale, sf::String names);
     void serializeBin(std::ofstream& out) override;
     void serializeJson(nlohmann::json& j) override;
     void resize(sf::Vector2f coords) override;

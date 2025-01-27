@@ -6,7 +6,7 @@
 class Rabbit : public Mammal {
 public:
 
-    Rabbit (sf::Vector2f coords, std::string plumage, sf::Vector2f scale);
+    Rabbit (sf::Vector2f coords, std::string plumage, sf::Vector2f scale, sf::String names);
     void serializeBin(std::ofstream& out) override;
     void serializeJson(nlohmann::json& j) override;
     void resize(sf::Vector2f coords) override ;
@@ -23,7 +23,7 @@ private:
     const int sizeY = 100;
     float Y = 0;
     const float JumpSpeed = 50;
-    const float speed = 0.24;
+    const float speed = 0.27;
 
 };
 

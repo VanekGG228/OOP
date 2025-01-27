@@ -11,10 +11,16 @@ Timer::Timer(int time,int size, float x,float y):startTime{time},timeLeft{time},
 	text.setPosition(x, y);
 }
 
+void Timer::setStartTime(int time)
+{
+	startTime = time;
+}
+
 void Timer::reset()
 {
 	clock.restart();
 	text.setString(std::to_string(startTime)); 
+	text.setFillColor(sf::Color::Black);
 	theEnd = false;
 }
 
@@ -29,6 +35,9 @@ void Timer::update()
 {
 	if (isRun) {
 		timeLeft = startTime - clock.getElapsedTime().asSeconds();
+		if (timeLeft <= 5) {
+			text.setFillColor(sf::Color::Red);
+		}
 		if (timeLeft <= 0) {
 			text.setString("0");
 			isRun = false;

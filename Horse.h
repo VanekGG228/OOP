@@ -6,7 +6,7 @@
 class Horse : public Mammal {
 public:
 
-    Horse(sf::Vector2f coords, std::string food, sf::Vector2f scale);
+    Horse(sf::Vector2f coords, std::string food, sf::Vector2f scale, sf::String names);
     void serializeBin(std::ofstream& out) override;
     void serializeJson(nlohmann::json& j) override;
     void resize(sf::Vector2f coords) override;
@@ -23,5 +23,5 @@ private:
     const int sizeY = 150;
     float Y = 0;
     const float JumpSpeed = 50;
-    const float speed = 0.24;
+    const float speed = 0.27;
 };
